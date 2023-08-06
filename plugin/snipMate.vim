@@ -37,9 +37,9 @@ augroup SnipMateDetect
 					\ | endif
 augroup END
 
-inoremap <silent> <Plug>snipMateNextOrTrigger  <C-R>=snipMate#TriggerSnippet()<CR>
-snoremap <silent> <Plug>snipMateNextOrTrigger  <Esc>a<C-R>=snipMate#TriggerSnippet()<CR>
-inoremap <silent> <Plug>snipMateTrigger        <C-R>=snipMate#TriggerSnippet(1)<CR>
+inoremap <silent> <Plug>snipMateTrigger        <C-R>=snipMate#TriggerSnippet()<CR>
+inoremap <silent> <Plug>snipMateNext           <C-R>=snipMate#ForwardsSnippet()<CR>
+snoremap <silent> <Plug>snipMateNext           <Esc>a<C-R>=snipMate#ForwardsSnippet()<CR>
 inoremap <silent> <Plug>snipMateBack           <C-R>=snipMate#BackwardsSnippet()<CR>
 snoremap <silent> <Plug>snipMateBack           <Esc>a<C-R>=snipMate#BackwardsSnippet()<CR>
 inoremap <silent> <Plug>snipMateShow           <C-R>=snipMate#ShowAvailableSnips()<CR>

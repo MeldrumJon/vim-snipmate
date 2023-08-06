@@ -543,6 +543,12 @@ fun! snipMate#CanBeTriggered() abort
 	return len(matches) > 0
 endf
 
+fun! snipMate#CanBeTriggeredExact() abort
+	let word    = snipMate#WordBelowCursor()
+	let matches = snipMate#GetSnippetsForWordBelowCursor(word, 1)
+	return len(matches) > 0
+endf
+
 fun! snipMate#ShowAvailableSnips() abort
 	let col     = col('.')
 	let word    = snipMate#WordBelowCursor()
@@ -559,105 +565,29 @@ fun! snipMate#ShowAvailableSnips() abort
 endf
 
 " Pass an argument to force snippet expansion instead of triggering or jumping
-function! snipMate#TriggerSnippet(...) abort
-	if exists('g:SuperTabMappingForward')
-		if g:SuperTabMappingForward == "<tab>"
-			let SuperTabPlug = maparg('<Plug>SuperTabForward', 'i')
-			if SuperTabPlug == ""
-				let SuperTabKey = "\<c-n>"
-			else
-				exec "let SuperTabKey = \"" . escape(SuperTabPlug, '<') . "\""
-			endif
-		elseif g:SuperTabMappingBackward == "<tab>"
-			let SuperTabPlug = maparg('<Plug>SuperTabBackward', 'i')
-			if SuperTabPlug == ""
-				let SuperTabKey = "\<c-p>"
-			else
-				exec "let SuperTabKey = \"" . escape(SuperTabPlug, '<') . "\""
-			endif
-		endif
-	endif
-
-	if pumvisible() " Update snippet if completion is used, or deal with supertab
-		if exists('SuperTabKey')
-			call feedkeys(SuperTabKey) | return ''
-		endif
-		call feedkeys("\<esc>a", 'n') " Close completion menu
-		" Once we've dismissed the completion menu, we have to cause this
-		" function to be executed over again, so that we actually get the
-		" snippet triggered. (Simply continuing to execute fails because
-		" we have to finish this function before the results of feedkeys take
-		" effect and dismiss the completion menu. Recursing also fails for
-		" similar reasons.)
-		if a:0 == 0
-			" Would be nice to have a more robust solution than manually
-			" branching on the arguments. I tried to do something like:
-			" call call(function('snipMate#TriggerSnippet'), a:000)
-			" But I couldn't quite get it working. Maybe somebody else with
-			" better vimscript skills can find a way to make it work, though?
-			call feedkeys("\<Plug>snipMateNextOrTrigger") | return ''
-		else
-			call feedkeys("\<Plug>snipMateTrigger") | return ''
-		endif
-	endif
-
-	if exists('b:snip_state') && a:0 == 0 " Jump only if no arguments
-		let jump = b:snip_state.jump_stop(0)
-		if type(jump) == 1 " returned a string
-			return jump
-		endif
-	endif
-
+function! snipMate#TriggerSnippet() abort
 	let word = matchstr(getline('.'), '\S\+\%'.col('.').'c')
 	let list = snipMate#GetSnippetsForWordBelowCursor(word, 1)
 	if empty(list)
-		let snippet = ''
-	else
-		let [trigger, snippetD] = list[0]
-		let snippet = s:ChooseSnippet(snippetD)
-		" Before expanding snippet, create new undo point |i_CTRL-G|
-		let &undolevels = &undolevels
-		let col = col('.') - len(trigger)
-		sil exe 's/\V'.escape(trigger, '/\.').'\%#//'
-		return snipMate#expandSnip(snippet[0], snippet[1], col)
-	endif
-
-	" should allow other plugins to register hooks instead (duplicate code)
-	if exists('SuperTabKey')
-		call feedkeys(SuperTabKey)
 		return ''
 	endif
-	return word == ''
-	  \ ? "\<tab>"
-	  \ : "\<c-r>=snipMate#ShowAvailableSnips()\<cr>"
+	let [trigger, snippetD] = list[0]
+	let snippet = s:ChooseSnippet(snippetD)
+	" Before expanding snippet, create new undo point |i_CTRL-G|
+	let &undolevels = &undolevels
+	let col = col('.') - len(trigger)
+	sil exe 's/\V'.escape(trigger, '/\.').'\%#//'
+	return snipMate#expandSnip(snippet[0], snippet[1], col)
+endfunction
+
+function! snipMate#ForwardsSnippet() abort
+	if exists('b:snip_state') | return b:snip_state.jump_stop(0) | endif
+	return ''
 endfunction
 
 fun! snipMate#BackwardsSnippet() abort
 	if exists('b:snip_state') | return b:snip_state.jump_stop(1) | endif
-
-	if exists('g:SuperTabMappingForward')
-		if g:SuperTabMappingForward == "<s-tab>"
-			let SuperTabPlug = maparg('<Plug>SuperTabForward', 'i')
-			if SuperTabPlug == ""
-				let SuperTabKey = "\<c-n>"
-			else
-				exec "let SuperTabKey = \"" . escape(SuperTabPlug, '<') . "\""
-			endif
-		elseif g:SuperTabMappingBackward == "<s-tab>"
-			let SuperTabPlug = maparg('<Plug>SuperTabBackward', 'i')
-			if SuperTabPlug == ""
-				let SuperTabKey = "\<c-p>"
-			else
-				exec "let SuperTabKey = \"" . escape(SuperTabPlug, '<') . "\""
-			endif
-		endif
-	endif
-	" should allow other plugins to register hooks instead (duplicate code)
-	if exists('SuperTabKey')
-		call feedkeys(SuperTabKey)
-		return ''
-	endif
-	return "\<s-tab>"
+        return ''
 endf
 
 " vim:noet:sw=4:ts=4:ft=vim
